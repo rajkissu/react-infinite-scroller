@@ -68,7 +68,7 @@ class App extends Component {
             items.push(
                 <div className="track" key={i}>
                     <a href={track.permalink_url} target="_blank">
-                        <img src={track.artwork_url} />
+                        <img src={track.artwork_url} width="150" height="150" />
                         <p className="title">{track.title}</p>
                     </a>
                 </div>
