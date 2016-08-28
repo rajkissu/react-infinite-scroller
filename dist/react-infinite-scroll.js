@@ -29,13 +29,20 @@ function topPosition(domElt) {
   return domElt.offsetTop + topPosition(domElt.offsetParent);
 }
 
+function leftPosition(domElt) {
+  if (!domElt) {
+    return 0;
+  }
+  return domElt.offsetLeft + leftPosition(domElt.offsetParent);
+}
+
 var InfiniteScroll = function (_React$Component) {
   _inherits(InfiniteScroll, _React$Component);
 
   function InfiniteScroll(props) {
     _classCallCheck(this, InfiniteScroll);
 
-    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(InfiniteScroll).call(this, props));
+    var _this = _possibleConstructorReturn(this, (InfiniteScroll.__proto__ || Object.getPrototypeOf(InfiniteScroll)).call(this, props));
 
     _this.scrollListener = _this.scrollListener.bind(_this);
     return _this;
@@ -56,7 +63,8 @@ var InfiniteScroll = function (_React$Component) {
     key: 'render',
     value: function render() {
       var props = this.props;
-      return _react2.default.DOM.div(null, props.children, props.hasMore && (props.loader || this._defaultLoader));
+      var style = props.style;
+      return _react2.default.DOM.div({ style: style }, props.children, props.hasMore && (props.loader || this._defaultLoader));
     }
   }, {
     key: 'scrollListener',
@@ -65,11 +73,26 @@ var InfiniteScroll = function (_React$Component) {
       var scrollEl = window;
 
       var offset;
-      if (this.props.useWindow == true) {
-        var scrollTop = scrollEl.pageYOffset !== undefined ? scrollEl.pageYOffset : (document.documentElement || document.body.parentNode || document.body).scrollTop;
-        offset = topPosition(el) + el.offsetHeight - scrollTop - window.innerHeight;
+      var axis = this.props.axis;
+
+      if (!(axis === 'x' || axis === 'y')) {
+        return;
+      }
+
+      if (axis === 'y') {
+        if (this.props.useWindow === true) {
+          var scrollTop = scrollEl.pageYOffset !== undefined ? scrollEl.pageYOffset : (document.documentElement || document.body.parentNode || document.body).scrollTop;
+          offset = topPosition(el) + el.offsetHeight - scrollTop - window.innerHeight;
+        } else {
+          offset = el.offsetHeight - el.parentNode.scrollTop - el.parentNode.clientHeight;
+        }
       } else {
-        offset = el.offsetHeight - el.parentNode.scrollTop - el.parentNode.clientHeight;
+        if (this.props.useWindow === true) {
+          var scrollLeft = scrollEl.pageXOffset !== undefined ? scrollEl.pageXOffset : (document.documentElement || document.body.parentNode || document.body).scrollLeft;
+          offset = leftPosition(el) + el.offsetWidth - scrollLeft - window.innerWidth;
+        } else {
+          offset = el.offsetWidth - el.parentNode.scrollLeft - el.parentNode.clientWidth;
+        }
       }
 
       if (offset < Number(this.props.threshold)) {
@@ -124,6 +147,7 @@ var InfiniteScroll = function (_React$Component) {
 exports.default = InfiniteScroll;
 
 InfiniteScroll.PropTypes = {
+  axis: _react2.default.PropTypes.string,
   pageStart: _react2.default.PropTypes.number,
   hasMore: _react2.default.PropTypes.bool,
   loadMore: _react2.default.PropTypes.func.isRequired,
@@ -131,6 +155,7 @@ InfiniteScroll.PropTypes = {
   useWindow: _react2.default.PropTypes.bool
 };
 InfiniteScroll.defaultProps = {
+  axis: 'y',
   pageStart: 0,
   hasMore: false,
   loadMore: function loadMore() {},

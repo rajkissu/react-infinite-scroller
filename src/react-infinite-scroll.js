@@ -8,6 +8,13 @@ function topPosition(domElt) {
   return domElt.offsetTop + topPosition(domElt.offsetParent);
 }
 
+function leftPosition(domElt) {
+  if (!domElt) {
+    return 0;
+  }
+  return domElt.offsetLeft + leftPosition(domElt.offsetParent);
+}
+
 export default class InfiniteScroll extends React.Component {
   constructor(props) {
     super(props);
@@ -23,18 +30,34 @@ export default class InfiniteScroll extends React.Component {
   }
   render() {
     var props = this.props;
-    return React.DOM.div(null, props.children, props.hasMore && (props.loader || this._defaultLoader));
+    var style = props.style;
+    return React.DOM.div({ style }, props.children, props.hasMore && (props.loader || this._defaultLoader));
   }
   scrollListener() {
     var el = ReactDOM.findDOMNode(this);
     var scrollEl = window;
 
     var offset;
-    if(this.props.useWindow == true) {
-      var scrollTop = (scrollEl.pageYOffset !== undefined) ? scrollEl.pageYOffset : (document.documentElement || document.body.parentNode || document.body).scrollTop;
-      offset = topPosition(el) + el.offsetHeight - scrollTop - window.innerHeight;
+    var axis = this.props.axis;
+
+    if (!(axis === 'x' || axis === 'y')) {
+      return
+    }
+
+    if (axis === 'y') {
+      if(this.props.useWindow === true) {
+        var scrollTop = (scrollEl.pageYOffset !== undefined) ? scrollEl.pageYOffset : (document.documentElement || document.body.parentNode || document.body).scrollTop;
+        offset = topPosition(el) + el.offsetHeight - scrollTop - window.innerHeight;
+      } else {
+        offset = el.offsetHeight - el.parentNode.scrollTop - el.parentNode.clientHeight;
+      }
     } else {
-      offset = el.offsetHeight - el.parentNode.scrollTop - el.parentNode.clientHeight;
+      if(this.props.useWindow === true) {
+        var scrollLeft = (scrollEl.pageXOffset !== undefined) ? scrollEl.pageXOffset : (document.documentElement || document.body.parentNode || document.body).scrollLeft;
+        offset = leftPosition(el) + el.offsetWidth - scrollLeft - window.innerWidth;
+      } else {
+        offset = el.offsetWidth - el.parentNode.scrollLeft - el.parentNode.clientWidth;
+      }
     }
 
     if (offset < Number(this.props.threshold)) {
@@ -75,6 +98,7 @@ export default class InfiniteScroll extends React.Component {
   }
 }
 InfiniteScroll.PropTypes = {
+  axis: React.PropTypes.string,
   pageStart: React.PropTypes.number,
   hasMore: React.PropTypes.bool,
   loadMore: React.PropTypes.func.isRequired,
@@ -82,6 +106,7 @@ InfiniteScroll.PropTypes = {
   useWindow: React.PropTypes.bool
 }
 InfiniteScroll.defaultProps = {
+  axis: 'y',
   pageStart: 0,
   hasMore: false,
   loadMore: function () {},
